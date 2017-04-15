@@ -1113,6 +1113,47 @@ type NetworkPolicyPort struct {
 	// will be matched.
 	// +optional
 	Port *intstr.IntOrString `json:"port,omitempty" protobuf:"bytes,2,opt,name=port"`
+
+	// Optional Layer 7 rules which must be satisfied. If not specified,
+	// no Layer 7 rules will be applied.
+	// +optional
+	Rules NetworkPolicyPortRuleList
+}
+
+// NetworkPolicyPortRuleList represents a list of rules to apply against
+// incoming requests in addition to the NetworkPolicyPort selector. Items in
+// this list are combined using a logical OR operation. If this field is empty
+// or missing, no additional matching on Layer 7 is performed. Mixing different
+// types of rules is disallowed, so exactly one of the following must be set.
+type NetworkPolicyPortRuleList struct {
+	// +optional
+	HTTP []NetworkPolicyPortRuleHTTP `json:"http,omitempty" protobuf:"bytes,1,opt,name=http"`
+}
+
+// NetworkPolicyPortRuleHTTP is a list of HTTP protocol constraints. All
+// fields are optional, if all fields are empty or missing, the rule does not
+// have any effect.
+//
+// All fields of this type are extended POSIX regex as defined by IEEE Std
+// 1003.1, (i.e this follows the egrep/unix syntax, not the perl syntax)
+// matched against the path of an incoming request. Currently it can
+// contain characters disallowed from the conventional "path"
+// part of a URL as defined by RFC 3986. Paths must begin with
+// a '/'. If unspecified, the path defaults to a catch all sending
+// traffic to the backend.
+//
+type NetworkPolicyPortRuleHTTP struct {
+	// Path is an extended POSIX regex matched against the path of an
+	// incoming request. Currently it can contain characters disallowed
+	// from the conventional "path" part of a URL as defined by RFC 3986.
+	// Paths must begin with a '/'.
+	// +optional
+	Path string `json:"path,omitempty" protobuf:"bytes,1,opt,name=path"`
+
+	// Method is an extended POSIX regex matched against the method of an
+	// incoming request, e.g. "GET", "POST", "PUT", "PATCH", "DELETE", ...
+	// +optional
+	Method string `json:"method,omitempty" protobuf:"bytes,1,opt,name=method"`
 }
 
 type NetworkPolicyPeer struct {
