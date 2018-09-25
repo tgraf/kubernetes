@@ -1173,7 +1173,7 @@ func RunDockershim(f *options.KubeletFlags, c *kubeletconfiginternal.KubeletConf
 		HairpinMode:        kubeletconfiginternal.HairpinMode(c.HairpinMode),
 		NonMasqueradeCIDR:  f.NonMasqueradeCIDR,
 		PluginName:         r.NetworkPluginName,
-		PluginConfDir:      r.CNIConfDir,
+		PluginConfDirs:     []string{r.CNIConfDir},
 		PluginBinDirString: r.CNIBinDir,
 		MTU:                int(r.NetworkPluginMTU),
 	}

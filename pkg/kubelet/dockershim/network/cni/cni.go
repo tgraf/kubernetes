@@ -48,7 +48,7 @@ type cniNetworkPlugin struct {
 	host        network.Host
 	execer      utilexec.Interface
 	nsenterPath string
-	confDir     string
+	confDirs    []string
 	binDirs     []string
 	podCidr     string
 }
@@ -94,7 +94,7 @@ func SplitDirs(dirs string) []string {
 	return strings.Split(dirs, ",")
 }
 
-func ProbeNetworkPlugins(confDir string, binDirs []string) []network.NetworkPlugin {
+func ProbeNetworkPlugins(confDirs []string, binDirs []string) []network.NetworkPlugin {
 	old := binDirs
 	binDirs = make([]string, 0, len(binDirs))
 	for _, dir := range old {
@@ -107,7 +107,7 @@ func ProbeNetworkPlugins(confDir string, binDirs []string) []network.NetworkPlug
 		defaultNetwork: nil,
 		loNetwork:      getLoNetwork(binDirs),
 		execer:         utilexec.New(),
-		confDir:        confDir,
+		confDirs:       confDirs,
 		binDirs:        binDirs,
 	}
 
@@ -116,13 +116,20 @@ func ProbeNetworkPlugins(confDir string, binDirs []string) []network.NetworkPlug
 	return []network.NetworkPlugin{plugin}
 }
 
-func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error) {
-	files, err := libcni.ConfFiles(confDir, []string{".conf", ".conflist", ".json"})
-	switch {
-	case err != nil:
-		return nil, err
-	case len(files) == 0:
-		return nil, fmt.Errorf("No networks found in %s", confDir)
+func getDefaultCNINetwork(confDirs []string, binDirs []string) (*cniNetwork, error) {
+	var files []string
+
+	for _, confDir := range confDirs {
+		f, err := libcni.ConfFiles(confDir, []string{".conf", ".conflist", ".json"})
+		if err != nil {
+			return nil, err
+		}
+
+		files = append(files, f)
+	}
+
+	if len(files) == 0 {
+		return nil, fmt.Errorf("No networks found in %v", confDirs)
 	}
 
 	sort.Strings(files)
@@ -183,7 +190,7 @@ func (plugin *cniNetworkPlugin) Init(host network.Host, hairpinMode kubeletconfi
 }
 
 func (plugin *cniNetworkPlugin) syncNetworkConfig() {
-	network, err := getDefaultCNINetwork(plugin.confDir, plugin.binDirs)
+	network, err := getDefaultCNINetwork(plugin.confDirs, plugin.binDirs)
 	if err != nil {
 		glog.Warningf("Unable to update cni config: %s", err)
 		return
@@ -249,7 +256,7 @@ func (plugin *cniNetworkPlugin) Name() string {
 }
 
 func (plugin *cniNetworkPlugin) Status() error {
-	// sync network config from confDir periodically to detect network config updates
+	// sync network config from confDirs periodically to detect network config updates
 	plugin.syncNetworkConfig()
 
 	// Can't set up pods if we don't have any CNI network configs yet

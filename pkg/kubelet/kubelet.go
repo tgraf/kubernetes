@@ -599,7 +599,7 @@ func NewMainKubelet(kubeCfg *kubeletconfiginternal.KubeletConfiguration,
 		HairpinMode:        kubeletconfiginternal.HairpinMode(kubeCfg.HairpinMode),
 		NonMasqueradeCIDR:  nonMasqueradeCIDR,
 		PluginName:         crOptions.NetworkPluginName,
-		PluginConfDir:      crOptions.CNIConfDir,
+		PluginConfDirs:     []string{crOptions.CNIConfDir},
 		PluginBinDirString: crOptions.CNIBinDir,
 		MTU:                int(crOptions.NetworkPluginMTU),
 	}

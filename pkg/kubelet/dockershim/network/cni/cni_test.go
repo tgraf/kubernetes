@@ -201,7 +201,7 @@ func TestCNIPlugin(t *testing.T) {
 		NetnsPath: "/proc/12345/ns/net",
 	}}
 
-	plugins := ProbeNetworkPlugins(testConfDir, []string{testBinDir})
+	plugins := ProbeNetworkPlugins([]string{testConfDir}, []string{testBinDir})
 	if len(plugins) != 1 {
 		t.Fatalf("Expected only one network plugin, got %d", len(plugins))
 	}
